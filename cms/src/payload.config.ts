@@ -64,9 +64,8 @@ export default buildConfig({
   cors: [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://www.acolead.com', // React dev server
-    getServerSideURL(),
     'https://acolead.com',
+    'https://www.acolead.com', // React dev server
   ].filter(Boolean),
   globals: [Header, Footer],
   plugins,

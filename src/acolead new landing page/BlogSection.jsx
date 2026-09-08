@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -69,7 +69,7 @@ const getDaysAgo = (dateString) => {
 // Function to estimate reading time (approximately 200 words per minute)
 // Function to transform Payload API response to component data
 const transformPostData = (apiPost, index) => {
-  let imageUrl = apiPost.heroImage?.url || apiPost.meta?.image?.url || '';
+  let imageUrl = apiPost.heroImage?.url || '';
   
   // Ensure image URL is absolute (add Payload API base URL if needed)
   if (imageUrl && !imageUrl.startsWith('http')) {
@@ -99,6 +99,7 @@ const BlogSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [visibleCards, setVisibleCards] = useState(4);
+  const [activeDot, setActiveDot] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const viewportRef = useRef(null);
   const trackRef = useRef(null);
@@ -112,6 +113,9 @@ const BlogSection = () => {
   const interactionPausedRef = useRef(false);
   const dragRef = useRef({ startX: null, startY: null, startPosition: 0, active: false });
   const suppressClickRef = useRef(false);
+  const activeDotRef = useRef(0);
+  const cardsPerView = isMobile ? 1 : visibleCards;
+  const shouldLoop = false;
 
   const applyPosition = () => {
     if (trackRef.current) {
@@ -119,19 +123,26 @@ const BlogSection = () => {
     }
   };
 
-  const normalizePosition = () => {
-    const setWidth = setWidthRef.current;
-    if (!setWidth) return;
+ const normalizePosition = useCallback(() => {
+  if (!trackRef.current || !viewportRef.current) return;
 
-    while (positionRef.current >= setWidth * 2) {
-      positionRef.current -= setWidth;
-      if (targetPositionRef.current !== null) targetPositionRef.current -= setWidth;
-    }
-    while (positionRef.current < setWidth) {
-      positionRef.current += setWidth;
-      if (targetPositionRef.current !== null) targetPositionRef.current += setWidth;
-    }
-  };
+  const maxPosition = Math.max(
+    0,
+    trackRef.current.scrollWidth - viewportRef.current.clientWidth
+  );
+
+  positionRef.current = Math.max(
+    0,
+    Math.min(positionRef.current, maxPosition)
+  );
+
+  if (targetPositionRef.current !== null) {
+    targetPositionRef.current = Math.max(
+      0,
+      Math.min(targetPositionRef.current, maxPosition)
+    );
+  }
+}, []);
 
   const scheduleResume = () => {
     window.clearTimeout(resumeTimerRef.current);
@@ -184,11 +195,45 @@ const BlogSection = () => {
     }
   };
 
-  const handleArrowClick = (direction) => {
+const handleArrowClick = (direction) => {
+  if (!trackRef.current || !viewportRef.current) return;
+
+  const firstCard = trackRef.current.children[0];
+  if (!firstCard) return;
+
+  const cardWidth =
+    firstCard.getBoundingClientRect().width;
+
+  const gap = 20;
+  const step = cardWidth + gap;
+
+  const maxPosition = Math.max(
+    0,
+    trackRef.current.scrollWidth -
+      viewportRef.current.clientWidth
+  );
+
+  const currentPosition =
+    targetPositionRef.current !== null
+      ? targetPositionRef.current
+      : positionRef.current;
+
+  const nextPosition = Math.max(
+    0,
+    Math.min(
+      currentPosition + step * direction,
+      maxPosition
+    )
+  );
+
+  targetPositionRef.current = nextPosition;
+};
+
+  const handleDotClick = (index) => {
     const step = setWidthRef.current / posts.length;
     if (!step) return;
     interactionPausedRef.current = true;
-    targetPositionRef.current = positionRef.current + step * direction;
+    targetPositionRef.current = setWidthRef.current + step * index;
     scheduleResume();
   };
 
@@ -280,9 +325,9 @@ const BlogSection = () => {
   }, []);
 
   const carouselPosts = useMemo(
-    () => (posts.length ? [...posts, ...posts, ...posts] : []),
-    [posts]
-  );
+  () => posts,
+  [posts]
+);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -293,56 +338,102 @@ const BlogSection = () => {
   }, []);
 
   useEffect(() => {
-    const measureCarousel = () => {
-      if (!trackRef.current || !posts.length) return;
-      setWidthRef.current = trackRef.current.scrollWidth / 3;
-      if (!positionRef.current) positionRef.current = setWidthRef.current;
-      normalizePosition();
-      applyPosition();
-    };
+   const measureCarousel = () => {
+  if (!trackRef.current || !viewportRef.current || !posts.length) return;
+
+  setWidthRef.current =
+    trackRef.current.scrollWidth;
+
+  normalizePosition();
+  applyPosition();
+};
 
     measureCarousel();
     window.addEventListener('resize', measureCarousel);
     return () => window.removeEventListener('resize', measureCarousel);
-  }, [posts.length, visibleCards, carouselPosts.length]);
+  }, [posts.length, cardsPerView, shouldLoop, carouselPosts.length, normalizePosition]);
 
   useEffect(() => {
-    if (!posts.length) return undefined;
+  if (!posts.length) return;
 
-    const animate = (timestamp) => {
-      const lastFrame = lastFrameRef.current || timestamp;
-      const deltaTime = Math.min(timestamp - lastFrame, 50);
-      lastFrameRef.current = timestamp;
+  const animate = (timestamp) => {
+    const lastFrame = lastFrameRef.current || timestamp;
+    const deltaTime = Math.min(timestamp - lastFrame, 50);
+    lastFrameRef.current = timestamp;
 
-      if (targetPositionRef.current !== null) {
-        const difference = targetPositionRef.current - positionRef.current;
-        const movement = difference * Math.min(1, deltaTime / 240);
-        positionRef.current += movement;
-        if (Math.abs(difference) < 0.5) {
-          positionRef.current = targetPositionRef.current;
-          targetPositionRef.current = null;
-        }
-      } else if (!reducedMotion && !hoverRef.current && !interactionPausedRef.current && !dragRef.current.active) {
-        positionRef.current += (28 * deltaTime) / 1000;
+    if (targetPositionRef.current !== null) {
+      const difference =
+        targetPositionRef.current - positionRef.current;
+
+      const movement =
+        difference * Math.min(1, deltaTime / 180);
+
+      positionRef.current += movement;
+
+      if (Math.abs(difference) < 0.5) {
+        positionRef.current = targetPositionRef.current;
+        targetPositionRef.current = null;
       }
 
       normalizePosition();
       applyPosition();
-      animationFrameRef.current = window.requestAnimationFrame(animate);
-    };
+    }
 
-    animationFrameRef.current = window.requestAnimationFrame(animate);
-    return () => {
-      window.cancelAnimationFrame(animationFrameRef.current);
-      window.clearTimeout(resumeTimerRef.current);
-      lastFrameRef.current = null;
-    };
-  }, [posts.length, reducedMotion]);
+    if (trackRef.current && viewportRef.current) {
+      const firstCard = trackRef.current.children[0];
+
+      if (firstCard) {
+        const cardWidth =
+          firstCard.getBoundingClientRect().width;
+
+        const gap = 20;
+        const step = cardWidth + gap;
+
+        const currentIndex = Math.round(
+          positionRef.current / step
+        );
+
+        const maxIndex = Math.max(
+          0,
+          posts.length - cardsPerView
+        );
+
+        const nextIndex = Math.min(
+          currentIndex,
+          maxIndex
+        );
+
+        if (nextIndex !== activeDotRef.current) {
+          activeDotRef.current = nextIndex;
+          setActiveDot(nextIndex);
+        }
+      }
+    }
+
+    animationFrameRef.current =
+      window.requestAnimationFrame(animate);
+  };
+
+  animationFrameRef.current =
+    window.requestAnimationFrame(animate);
+
+  return () => {
+    window.cancelAnimationFrame(animationFrameRef.current);
+    window.clearTimeout(resumeTimerRef.current);
+    lastFrameRef.current = null;
+  };
+}, [
+  posts.length,
+  cardsPerView,
+  normalizePosition,
+]);
 
   return (
     <Box
       sx={{
         width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
         background: '#f6f9ff',
         py: { xs: 4, md: 6 },
         px: 2,
@@ -356,6 +447,7 @@ const BlogSection = () => {
       >
        <Box
   sx={{
+    position: 'relative',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -385,13 +477,15 @@ const BlogSection = () => {
         fontWeight: 700,
         lineHeight: 1.15,
         color: '#101828',
-        fontSize: { xs: '1.8rem', md: '2.55rem' },
-        whiteSpace: { xs: 'normal', md: 'nowrap' },
+        fontSize: { xs: '1.55rem', md: '2.55rem' },
+        whiteSpace: 'normal',
         letterSpacing: '-0.02em',
       }}
     >
       Latest thinking, ideas and industry perspectives
     </Typography>
+
+    
   </Box>
 
   <Button
@@ -407,13 +501,21 @@ const BlogSection = () => {
       flexShrink: 0,
       '& .MuiButton-endIcon': {
         marginLeft: '8px',
+        display: 'inline-flex',
+        flexShrink: 0,
       },
       '&:hover': {
         background: 'transparent',
       },
+      [theme.breakpoints.down('md')]: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 1,
+      },
     }}
   >
-    View All Insights
+    View All<Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>{' Insights'}</Box>
   </Button>
 </Box>
 
@@ -454,7 +556,10 @@ const BlogSection = () => {
           <Box
             sx={{
               position: 'relative',
-              px: { xs: 5, md: 7 },
+              width: '100%',
+              maxWidth: '100%',
+              overflow: 'hidden',
+              px: { xs: 6, md: 8 },
             }}
           >
             <IconButton
@@ -463,13 +568,17 @@ const BlogSection = () => {
               onPointerDown={(event) => event.stopPropagation()}
               sx={{
                 position: 'absolute',
-                left: 0,
+                left: { xs: 0, md: 8 },
                 top: '50%',
                 zIndex: 2,
                 transform: 'translateY(-50%)',
-                backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                backgroundColor: '#fff',
+                color: '#6B7280',
                 boxShadow: '0 4px 14px rgba(16, 24, 40, 0.14)',
-                '&:hover': { backgroundColor: '#fff' },
+                '&:hover': {
+                backgroundColor: '#1677F7',
+                color: '#fff',
+},
               }}
             >
               <ChevronLeftIcon />
@@ -480,13 +589,14 @@ const BlogSection = () => {
               onPointerDown={(event) => event.stopPropagation()}
               sx={{
                 position: 'absolute',
-                right: 0,
+                right: { xs: 0, md: 8 },
                 top: '50%',
                 zIndex: 2,
                 transform: 'translateY(-50%)',
-                backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                backgroundColor: '#fff',
+                color: 'inherit',
                 boxShadow: '0 4px 14px rgba(16, 24, 40, 0.14)',
-                '&:hover': { backgroundColor: '#fff' },
+                '&:hover': { backgroundColor: '#1677F7', color: '#fff' },
               }}
             >
               <ChevronRightIcon />
@@ -498,7 +608,9 @@ const BlogSection = () => {
                 cursor: 'grab',
                 touchAction: 'pan-y',
                 '--card-gap': '20px',
-                '--card-width': `calc((100% - ${(visibleCards - 1) * 20}px) / ${visibleCards})`,
+                '--card-width': `calc(
+  (100% - ${(cardsPerView - 1) * 20}px) / ${cardsPerView}
+)`,
               }}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
@@ -513,6 +625,7 @@ const BlogSection = () => {
                 sx={{
                   display: 'flex',
                   gap: 'var(--card-gap)',
+                  justifyContent: 'flex-start',
                   willChange: 'transform',
                 }}
               >
@@ -528,12 +641,15 @@ const BlogSection = () => {
                 }}
                 sx={{
                   background: '#fff',
-                  borderRadius: 0, // from first image, edges might be sharper or just 4px
                   border: '1px solid #e5e7eb',
+                  borderRadius: 2,
+                  overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
                   cursor: 'pointer',
-                  minHeight: 400,
+                  height: { xs: 'auto', sm: 460, md: 540 },
+                  boxSizing: 'border-box',
+                  minWidth: 0,
                   flex: '0 0 var(--card-width)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
@@ -543,7 +659,7 @@ const BlogSection = () => {
                 }}
               >
                 {/* Fixed height image container */}
-                <Box sx={{ height: 220, overflow: 'hidden', position: 'relative', background: post.accent }}>
+                <Box sx={{ height: { xs: 'auto', sm: 180, md: 255 }, aspectRatio: { xs: '1.4 / 1', sm: 'auto' }, flexShrink: 0, overflow: 'hidden', position: 'relative', background: '#fff', borderRadius: '16px 16px 0 0' }}>
                   {post.image && (
                     <Box
                       component="img"
@@ -553,13 +669,14 @@ const BlogSection = () => {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
+                        objectPosition: 'center',
                       }}
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   )}
                 </Box>
 
-                <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <Box sx={{ p: { xs: 3, md: 4 }, display: 'flex', flexDirection: 'column', flex: 1 }}>
                   {/* Tag and Read Time Row */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography
@@ -597,6 +714,7 @@ const BlogSection = () => {
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      minHeight: { xs: '2.97rem', md: '3.24rem' },
                     }}
                   >
                     {post.title}
@@ -614,6 +732,7 @@ const BlogSection = () => {
                       WebkitBoxOrient: 'vertical',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      minHeight: { xs: '4.56rem', md: '4.56rem' },
                     }}
                   >
                     {post.excerpt}
@@ -631,22 +750,56 @@ const BlogSection = () => {
                   >
                     <Typography
                       sx={{
-                        fontSize: '0.8rem',
+                        fontSize: '1rem',
                         fontWeight: 700,
                         color: '#1677F7',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
+                        textTransform: 'none',
                       }}
                     >
                       READ MORE
                     </Typography>
-                    <ArrowForwardIcon sx={{ ml: 0.5, color: '#1677F7', fontSize: '1.1rem' }} />
+                    <Box
+                      sx={{
+                        ml: 1.25,
+                        width: 42,
+                        height: 42,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#e5f0ff',
+                      }}
+                    >
+                      <ArrowForwardIcon sx={{ color: '#1677F7', fontSize: '1.25rem' }} />
+                    </Box>
                   </Box>
                 </Box>
               </Box>
               ))}
             </Box>
             </Box>
+            {isMobile && posts.length > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, mt: 3 }}>
+                {posts.slice(0, 4).map((post, index) => (
+                  <Box
+                    key={post.id || post.slug || index}
+                    component="button"
+                    type="button"
+                    aria-label={`Show insight ${index + 1}`}
+                    onClick={() => handleDotClick(index)}
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      p: 0,
+                      border: 0,
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      backgroundColor: index === activeDot ? '#1677F7' : '#cbd0d8',
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
         </Box>
         )}
       </Box>
