@@ -65,6 +65,8 @@ export default buildConfig({
     'http://localhost:3000',
     'http://localhost:3001',
     'https://acolead.com',
+    'https://www.coalitionify.com',
+    'http://localhost:3002',
     'https://www.acolead.com', // React dev server
   ].filter(Boolean),
   globals: [Header, Footer],

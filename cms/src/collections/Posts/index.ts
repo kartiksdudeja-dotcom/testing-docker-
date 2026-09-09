@@ -49,6 +49,9 @@ export const Posts: CollectionConfig<'posts'> = {
   },
   admin: {
     defaultColumns: ['title', 'slug', 'updatedAt'],
+    components: {
+      beforeList: ['@/components/PostsFolders'],
+    },
     livePreview: {
       url: ({ data, req }) =>
         generatePreviewPath({
@@ -161,8 +164,30 @@ export const Posts: CollectionConfig<'posts'> = {
         },
       ],
     },
+    
     {
-      name: 'publishedAt',
+  name: 'website',
+  label: 'Website',
+  type: 'select',
+  required: true,
+  defaultValue: 'acolead',
+  options: [
+    {
+      label: 'Acolead',
+      value: 'acolead',
+    },
+    {
+      label: 'Coalitionify',
+      value: 'coalitionify',
+    },
+  ],
+  admin: {
+    position: 'sidebar',
+  },
+},
+
+{
+  name: 'publishedAt',
       type: 'date',
       admin: {
         date: {

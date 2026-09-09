@@ -16,7 +16,6 @@ const dirname = path.dirname(filename)
 
 export const Media: CollectionConfig = {
   slug: 'media',
-  folders: true,
   access: {
     create: authenticated,
     delete: authenticated,
@@ -74,6 +73,12 @@ export const Media: CollectionConfig = {
         name: 'og',
         width: 1200,
         height: 630,
+        crop: 'center',
+      },
+      {
+        name: 'blogThumbnail',
+        width: 1200,
+        height: 675,
         crop: 'center',
       },
     ],

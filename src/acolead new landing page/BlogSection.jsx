@@ -65,18 +65,21 @@ const getDaysAgo = (dateString) => {
   return `${diffDays} days ago`;
 };
 
+const getMediaUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+
+  const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api';
+  return `${apiUrl.replace('/api', '')}${url}`;
+};
 
 // Function to estimate reading time (approximately 200 words per minute)
 // Function to transform Payload API response to component data
 const transformPostData = (apiPost, index) => {
-  let imageUrl = apiPost.heroImage?.url || '';
-  
-  // Ensure image URL is absolute (add Payload API base URL if needed)
-  if (imageUrl && !imageUrl.startsWith('http')) {
-    const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'http://localhost:3000/api';
-    const baseUrl = apiUrl.replace('/api', '');
-    imageUrl = `${baseUrl}${imageUrl}`;
-  }
+  const heroImage = apiPost.heroImage;
+  const thumbnailUrl =
+    heroImage?.sizes?.blogThumbnail?.url || heroImage?.sizes?.og?.url || heroImage?.url || '';
+  const imageUrl = getMediaUrl(thumbnailUrl);
   
   return {
     id: apiPost.id,
@@ -285,16 +288,14 @@ const handleArrowClick = (direction) => {
         // Configure your Payload API URL:
         // For local development: http://localhost:3000/api
         // For production: https://your-cms-domain.com/api
-        const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'http://localhost:3000/api';
+        const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api';
         
         // Fetch published posts, ordered by creation date (newest first)
         const response = await fetch(
-          `${apiUrl}/posts?limit=20&sort=-createdAt&where[_status][equals]=published`,
+          `${apiUrl}/posts?depth=1&limit=20&sort=-createdAt&where[_status][equals]=published&_=${Date.now()}`,
           {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+            method: 'GET',
+            cache: 'no-store',
           }
         );
 
@@ -515,7 +516,7 @@ const handleArrowClick = (direction) => {
       },
     }}
   >
-    View All<Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>{' Insights'}</Box>
+    View All <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>{'  Insights'}</Box>
   </Button>
 </Box>
 
@@ -647,7 +648,7 @@ const handleArrowClick = (direction) => {
                   display: 'flex',
                   flexDirection: 'column',
                   cursor: 'pointer',
-                  height: { xs: 'auto', sm: 460, md: 540 },
+                  height: 'auto',
                   boxSizing: 'border-box',
                   minWidth: 0,
                   flex: '0 0 var(--card-width)',
@@ -658,8 +659,17 @@ const handleArrowClick = (direction) => {
                   },
                 }}
               >
-                {/* Fixed height image container */}
-                <Box sx={{ height: { xs: 'auto', sm: 180, md: 255 }, aspectRatio: { xs: '1.4 / 1', sm: 'auto' }, flexShrink: 0, overflow: 'hidden', position: 'relative', background: '#fff', borderRadius: '16px 16px 0 0' }}>
+                <Box
+                  sx={{
+                    width: '100%',
+                    aspectRatio: '16 / 9',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    backgroundColor: '#fff',
+                    borderRadius: '16px 16px 0 0',
+                  }}
+                >
                   {post.image && (
                     <Box
                       component="img"
@@ -670,8 +680,11 @@ const handleArrowClick = (direction) => {
                         height: '100%',
                         objectFit: 'cover',
                         objectPosition: 'center',
+                        display: 'block',
                       }}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   )}
                 </Box>
