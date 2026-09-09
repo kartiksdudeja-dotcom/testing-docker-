@@ -315,7 +315,7 @@ const RelatedInsights = ({ currentPostId, limit = 3 }) => {
   useEffect(() => {
     const fetchRelatedPosts = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'http://localhost:3000/api';
+        const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api';
         const response = await fetch(`${apiUrl}/posts?limit=${limit + 1}&sort=-createdAt&where[_status][equals]=published`);
         const data = await response.json();
         const filtered = data.docs.filter((post) => post.id !== currentPostId).slice(0, limit);
@@ -362,7 +362,7 @@ const RelatedInsights = ({ currentPostId, limit = 3 }) => {
         {relatedPosts.map((post) => {
           let imageUrl = post.heroImage?.url || post.meta?.image?.url || '';
           if (imageUrl && !imageUrl.startsWith('http')) {
-            const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'http://localhost:3000/api';
+            const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api';
             const baseUrl = apiUrl.replace('/api', '');
             imageUrl = `${baseUrl}${imageUrl}`;
           }
@@ -532,7 +532,7 @@ const ArticleDetail = () => {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'http://localhost:3000/api';
+        const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api';
         const response = await fetch(`${apiUrl}/posts?where[slug][equals]=${slug}&where[_status][equals]=published`);
         const data = await response.json();
 
@@ -581,7 +581,7 @@ const ArticleDetail = () => {
   const heroImage = post.heroImage?.url
     ? (post.heroImage.url.startsWith('http')
         ? post.heroImage.url
-        : `${(process.env.REACT_APP_PAYLOAD_API_URL || 'http://localhost:3000/api').replace('/api', '')}${post.heroImage.url}`)
+        : `${(process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api').replace('/api', '')}${post.heroImage.url}`)
     : null;
 
   
