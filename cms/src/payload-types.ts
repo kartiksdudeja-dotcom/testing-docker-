@@ -315,6 +315,14 @@ export interface Media {
       filesize?: number | null;
       filename?: string | null;
     };
+    fourThree?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
     small?: {
       url?: string | null;
       width?: number | null;
@@ -356,6 +364,14 @@ export interface Media {
       filename?: string | null;
     };
     blogThumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    portrait?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -1224,6 +1240,16 @@ export interface MediaSelect<T extends boolean = true> {
               filesize?: T;
               filename?: T;
             };
+        fourThree?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
         small?:
           | T
           | {
@@ -1275,6 +1301,16 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
         blogThumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        portrait?:
           | T
           | {
               url?: T;
@@ -1763,6 +1799,19 @@ export interface CodeBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'code';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableOfContentsBlock".
+ */
+export interface TableOfContentsBlock {
+  /**
+   * The heading shown above the automatically generated table of contents.
+   */
+  title?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableOfContents';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
