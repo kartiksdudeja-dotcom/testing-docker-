@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Box,
-  Button,
   IconButton,
   Typography,
   useMediaQuery,
@@ -77,8 +76,7 @@ const getMediaUrl = (url) => {
 // Function to transform Payload API response to component data
 const transformPostData = (apiPost, index) => {
   const heroImage = apiPost.heroImage;
-  const thumbnailUrl =
-    heroImage?.sizes?.blogThumbnail?.url || heroImage?.sizes?.og?.url || heroImage?.url || '';
+  const thumbnailUrl = heroImage?.url || '';
   const imageUrl = getMediaUrl(thumbnailUrl);
   
   return {
@@ -103,7 +101,7 @@ const BlogSection = () => {
   const [error, setError] = useState(null);
   const [visibleCards, setVisibleCards] = useState(4);
   const [activeDot, setActiveDot] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [, setReducedMotion] = useState(false);
   const viewportRef = useRef(null);
   const trackRef = useRef(null);
   const positionRef = useRef(0);
@@ -286,8 +284,7 @@ const handleArrowClick = (direction) => {
         setLoading(true);
         
         // Configure your Payload API URL:
-        // For local development: http://localhost:3000/api
-        // For production: https://your-cms-domain.com/api
+        // The Payload CMS API endpoint can still be overridden through the environment.
         const apiUrl = process.env.REACT_APP_PAYLOAD_API_URL || 'https://206.189.91.184.sslip.io/api';
         
         // Fetch published posts, ordered by creation date (newest first)
@@ -489,35 +486,6 @@ const handleArrowClick = (direction) => {
     
   </Box>
 
-  <Button
-    endIcon={<ArrowForwardIcon />}
-    sx={{
-      color: '#1677F7',
-      fontWeight: 600,
-      textTransform: 'none',
-      fontSize: '1rem',
-      px: 0,
-      minWidth: 'fit-content',
-      whiteSpace: 'nowrap',
-      flexShrink: 0,
-      '& .MuiButton-endIcon': {
-        marginLeft: '8px',
-        display: 'inline-flex',
-        flexShrink: 0,
-      },
-      '&:hover': {
-        background: 'transparent',
-      },
-      [theme.breakpoints.down('md')]: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        zIndex: 1,
-      },
-    }}
-  >
-    View All <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>{'  Insights'}</Box>
-  </Button>
 </Box>
 
         {/* Loading state */}
@@ -678,7 +646,7 @@ const handleArrowClick = (direction) => {
                       sx={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'fill',
                         objectPosition: 'center',
                         display: 'block',
                       }}

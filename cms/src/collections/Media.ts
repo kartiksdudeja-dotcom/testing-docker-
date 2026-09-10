@@ -49,10 +49,17 @@ export const Media: CollectionConfig = {
         width: 300,
       },
       {
-        name: 'square',
-        width: 500,
-        height: 500,
-      },
+  name: 'square',
+  width: 800,
+  height: 800,
+  crop: 'center',
+},
+{
+  name: 'fourThree',
+  width: 1200,
+  height: 900,
+  crop: 'center',
+},
       {
         name: 'small',
         width: 600,
@@ -81,6 +88,12 @@ export const Media: CollectionConfig = {
         height: 675,
         crop: 'center',
       },
+      {
+  name: 'portrait',
+  width: 900,
+  height: 1600,
+  crop: 'center',
+},
     ],
   },
 }
