@@ -15,6 +15,7 @@ import { PRODUCT_OPTIONS } from './constants';
 import { cpcrmApi } from '../../redux/cpcrm.api';
 import { APP_STORE_LINK, PLAY_STORE_LINK } from '../../components/StoreButtons';
 import { checkIsAndroid, checkIsIOS } from '../../utils';
+import { WarningAmberRounded } from '@mui/icons-material';
 
 const ACOLEAD_CONTACT_NUMBER = '+919112614174';
 
@@ -602,7 +603,7 @@ const RegistrationForm = forwardRef(({ features }, ref) => {
                                             fullWidth
                                             variant="outlined"
                                             onClick={handleSendOtp}
-                                            disabled={isSendingOtp || !!formik.errors.mobileNumber}
+                                            disabled={!features.length || isSendingOtp || !!formik.errors.mobileNumber}
                                             loading={isSendingOtp}
                                             sx={{
                                                 borderRadius: 1.5,
@@ -625,7 +626,7 @@ const RegistrationForm = forwardRef(({ features }, ref) => {
                                             fullWidth
                                             variant="text"
                                             onClick={handleResendOtp}
-                                            disabled={isSendingOtp || !canResend}
+                                            disabled={!features.length || isSendingOtp || !canResend}
                                             loading={isSendingOtp}
                                             sx={{
                                                 borderRadius: 1.5,
@@ -731,7 +732,7 @@ const RegistrationForm = forwardRef(({ features }, ref) => {
                                     size="large"
                                     variant="contained"
                                     onClick={handleVerifyOtp}
-                                    disabled={isVerifying || !formik.isValid || !features.length || formik.values.otp?.length < 6}
+                                    disabled={!features.length || isVerifying || !formik.isValid || formik.values.otp?.length < 6}
                                     loading={isVerifying}
                                     sx={{
                                         borderRadius: 1.5,
@@ -775,6 +776,52 @@ const RegistrationForm = forwardRef(({ features }, ref) => {
                         </>
                     )}
                 </Stack>
+                {!features.length && (
+                    <Stack
+                        direction="row"
+                        spacing={1.25}
+                        alignItems="center"
+                        sx={{
+                            px: 1.5,
+                            py: 1,
+                            borderRadius: 3,
+                            border: '1px solid',
+                            borderColor: 'rgba(245, 158, 11, 0.3)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.06)',
+                            // visibility: !features.length ? "visible" : "hidden",
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                color: '#d97706',
+                                flexShrink: 0,
+                            }}
+                        >
+                            <WarningAmberRounded sx={{ fontSize: 16 }} />
+                        </Box>
+
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                fontSize: '0.8rem',
+                                fontWeight: 500,
+                                color: '#b45309',
+                                letterSpacing: '-0.005em',
+                                lineHeight: 1.4,
+                            }}
+                        >
+                            No product selected.{' '}
+                            Select at least 1 to proceed.
+                        </Typography>
+                    </Stack>
+                )}
             </Box>
 
             {/* <Box
