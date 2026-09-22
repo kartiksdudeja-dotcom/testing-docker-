@@ -3,6 +3,7 @@ import { Box, Typography, Button, useMediaQuery, useTheme, MobileStepper } from 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import bg from './images/bg.png';
+import bg2 from './images/bg2.png';
 import mainimg from './images/mainimg.png';
 import calender from './images/calender.png';
 import card from './images/card.png';
@@ -267,9 +268,9 @@ const HomePage = ({ handleScrollToForm }) => {
                                     transform: 'translateX(4px)',
                                 },
                             }}
-                            onClick={onClickGetStarted}
+                            onClick={handleScrollToForm}
                         >
-                            Start with {featureContent.label}
+                             BOOK A Demo 
                         </Button>
                     </motion.div>
 
