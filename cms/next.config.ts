@@ -53,5 +53,6 @@ const nextConfig: NextConfig = {
     root: path.resolve(dirname),
   },
 }
+
  
 export default withPayload(nextConfig, { devBundleServerPackages: false })
