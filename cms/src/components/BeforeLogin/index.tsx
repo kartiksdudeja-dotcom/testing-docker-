@@ -4,7 +4,7 @@ const BeforeLogin: React.FC = () => {
   return (
     <div>
       <p>
-        <b>Welcome to your dashboard!</b>
+        <b>Welcome to your acolead dashboard!</b>
         {' This is where site admins will log in to manage your website.'}
       </p>
     </div>

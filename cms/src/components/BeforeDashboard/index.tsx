@@ -10,7 +10,7 @@ const BeforeDashboard: React.FC = () => {
   return (
     <div className={baseClass}>
       <Banner className={`${baseClass}__banner`} type="success">
-        <h4>Welcome to your dashboard!</h4>
+        <h4>Welcome to your acolead dashboard!</h4>
       </Banner>
       Here&apos;s what to do next:
       <ul className={`${baseClass}__instructions`}>
@@ -18,7 +18,7 @@ const BeforeDashboard: React.FC = () => {
           <SeedButton />
           {' with a few pages, posts, and projects to jump-start your new site, then '}
           <a href="/" target="_blank">
-            visit your website
+            visit acolead.com
           </a>
           {' to see the results.'}
         </li>
